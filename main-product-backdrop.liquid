@@ -1,0 +1,348 @@
+<!-- Swiper CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+<link rel="stylesheet" href="{{ 'pdp-backdrop.css' | asset_url }}" />
+
+
+<section class="pdp-backdrop" id="pdp-backdrop-{{ section.id }}">
+  <div class="pdp-backdrop__grid">
+
+    <!-- MEDIA -->
+    <div class="pdp-backdrop__media">
+      <!-- Main Swiper -->
+      <div class="swiper pdp-backdrop__main-swiper">
+        <div class="swiper-wrapper">
+          {% for media in product.media %}
+            <div class="swiper-slide">
+              {{
+                media
+                | image_url: width: 1600
+                | image_tag: loading: 'eager', fetchpriority: 'high'
+              }}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Thumb Swiper -->
+      {% if product.media.size > 1 %}
+        <div class="pdp-backdrop__thumbs-wrapper">
+          <div class="swiper pdp-backdrop__thumbs-swiper">
+            <div class="swiper-wrapper">
+              {% for media in product.media %}
+                <div class="swiper-slide pdp-backdrop__thumb-slide">
+                   <div class="pdp-backdrop__thumb-inner">
+                    {{
+                      media
+                      | image_url: width: 400
+                      | image_tag: loading: 'lazy'
+                    }}
+                   </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+          <!-- Navigation -->
+          <div class="swiper-button-prev pdp-backdrop__thumb-prev"></div>
+          <div class="swiper-button-next pdp-backdrop__thumb-next"></div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- INFO -->
+    <div class="pdp-backdrop__info">
+
+      <h1 class="pdp-backdrop__title">{{ product.title }}</h1>
+
+      <div class="pdp-backdrop__top-review">
+        <span class="pdp-backdrop__stars">★★★★★</span>
+        <span class="pdp-backdrop__top-review-text">Top Rated by 500+ Customers</span>
+      </div>
+
+      <div class="pdp-backdrop__highlights">
+        <div class="pdp-backdrop__highlight-item">
+          <span class="pdp-backdrop__highlight-icon">🚚</span>
+          <span><strong>Fast Free Shipping</strong></span>
+        </div>
+        <div class="pdp-backdrop__highlight-item">
+          <span class="pdp-backdrop__highlight-icon">✔️</span>
+          <span><strong>Premium Materials</strong></span>
+        </div>
+      </div>
+
+      {% if product.metafields.custom.setup_time != blank %}
+        <p class="pdp-backdrop__setup">
+          <strong>Setup Time:</strong> {{ product.metafields.custom.setup_time }}
+        </p>
+      {% endif %}
+
+      <div class="pdp-backdrop__price-wrapper">
+        <div class="pdp-backdrop__price" id="ProductPrice-{{ section.id }}">
+          {{ product.selected_or_first_available_variant.price | money }}
+        </div>
+        {% if product.selected_or_first_available_variant.compare_at_price > product.selected_or_first_available_variant.price %}
+          <div class="pdp-backdrop__price-compare" id="ComparePrice-{{ section.id }}">
+            {{ product.selected_or_first_available_variant.compare_at_price | money }}
+          </div>
+          <div class="pdp-backdrop__price-badge" id="PriceBadge-{{ section.id }}">
+            SAVE {{ product.selected_or_first_available_variant.compare_at_price | minus: product.selected_or_first_available_variant.price | times: 100.0 | divided_by: product.selected_or_first_available_variant.compare_at_price | round }}%
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Trust strip -->
+      <div class="pdp-backdrop__trust">
+        <span>Free Design Proof</span>
+        <span>Secure Checkout</span>
+        <span>Fast Shipping</span>
+      </div>
+
+      <!-- PRODUCT FORM -->
+      {%- assign product_form_id = 'ProductForm-' | append: section.id -%}
+      {%- form 'product', product, id: product_form_id, class: 'pdp-backdrop__form' -%}
+        <input
+          type="hidden"
+          name="id"
+          id="VariantId-{{ section.id }}"
+          value="{{ product.selected_or_first_available_variant.id }}"
+        >
+
+        <!-- Variant Options -->
+        {% for option in product.options_with_values %}
+          <fieldset class="pdp-backdrop__fieldset">
+            <legend class="pdp-backdrop__legend">{{ option.name }}</legend>
+
+            <div class="pdp-backdrop__options">
+              {% for value in option.values %}
+                <label class="pdp-backdrop__option">
+                  <input
+                    type="radio"
+                    name="options[{{ option.name }}]"
+                    value="{{ value | escape }}"
+                    {% if option.selected_value == value %}checked{% endif %}
+                  >
+                  <span>{{ value }}</span>
+                </label>
+              {% endfor %}
+            </div>
+          </fieldset>
+        {% endfor %}
+
+        <!-- Quantity -->
+        <div class="pdp-backdrop__qty">
+          <label class="pdp-backdrop__legend" for="Quantity-{{ section.id }}">Quantity</label>
+          <div class="pdp-backdrop__qty-stepper">
+            <button type="button" class="pdp-backdrop__qty-btn" id="QtyMinus-{{ section.id }}" aria-label="Decrease quantity">−</button>
+            <input id="Quantity-{{ section.id }}" type="number" name="quantity" value="1" min="1" readonly>
+            <button type="button" class="pdp-backdrop__qty-btn" id="QtyPlus-{{ section.id }}" aria-label="Increase quantity">+</button>
+          </div>
+        </div>
+
+        <div class="pdp-backdrop__checkout-actions">
+          <button
+            type="submit"
+            name="add"
+            class="pdp-backdrop__atc"
+            id="AddToCartBtn-{{ section.id }}"
+            {% unless product.selected_or_first_available_variant.available %}disabled{% endunless %}
+          >
+            {% if product.selected_or_first_available_variant.available %}
+              Add to Cart
+            {% else %}
+              Sold Out
+            {% endif %}
+          </button>
+          {{ form | payment_button }}
+        </div>
+
+        <p class="pdp-backdrop__stock" id="StockMsg-{{ section.id }}">
+           {% if product.selected_or_first_available_variant.available %}
+            In Stock
+          {% else %}
+            Out of Stock
+          {% endif %}
+        </p>
+      {%- endform -%}
+
+      <!-- Includes -->
+      {% if product.metafields.custom.includes != blank %}
+        <div class="pdp-backdrop__includes">
+          <h3>What’s Included</h3>
+          <div class="pdp-backdrop__includes-content">
+            {{ product.metafields.custom.includes | newline_to_br }}
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Accordions -->
+      <div class="pdp-backdrop__accordion">
+
+        <details open>
+          <summary>Product Overview</summary>
+          <div class="pdp-backdrop__content">
+            {{ product.description }}
+          </div>
+        </details>
+
+        {% if product.metafields.custom.specifications != blank %}
+          <details>
+            <summary>Specifications</summary>
+            <div class="pdp-backdrop__content">
+              {{ product.metafields.custom.specifications | metafield_tag }}
+            </div>
+          </details>
+        {% endif %}
+
+        {% if product.metafields.custom.shipping_note != blank %}
+          <details>
+            <summary>Shipping & Delivery</summary>
+            <div class="pdp-backdrop__content">
+              {{ product.metafields.custom.shipping_note | metafield_tag }}
+            </div>
+          </details>
+        {% endif %}
+
+      </div>
+
+      <!-- FAQ Metaobjects -->
+      {% assign faqs = product.metafields.custom.faq_items.value %}
+
+      {% if faqs != blank %}
+        <div class="pdp-backdrop__faq">
+          <h2>FAQs</h2>
+
+          {% for faq in faqs %}
+            <details>
+              <summary>{{ faq.question }}</summary>
+              <div class="pdp-backdrop__content">
+                {{ faq.answer | metafield_tag }}
+              </div>
+            </details>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <!-- CUSTOMER REVIEWS -->
+      <div class="pdp-backdrop__reviews">
+        <h3 class="pdp-backdrop__reviews-title">Trusted by Thousands</h3>
+        <div class="pdp-backdrop__reviews-summary">
+          <div class="pdp-backdrop__reviews-stars">★★★★★</div>
+          <span><strong>4.9/5</strong> Based on 500+ Reviews</span>
+        </div>
+        <div class="pdp-backdrop__reviews-grid">
+          <div class="pdp-backdrop__review-card">
+            <div class="pdp-backdrop__review-stars">★★★★★</div>
+            <p class="pdp-backdrop__review-text">"The quality of the backdrop is exceptional. It's durable, the colors are vibrant, and it's incredibly easy to assemble."</p>
+            <div class="pdp-backdrop__review-footer">
+              <span class="pdp-backdrop__review-author">Robert M.</span>
+              <span class="pdp-backdrop__review-verified">Verified Buyer</span>
+            </div>
+          </div>
+          <div class="pdp-backdrop__review-card">
+            <div class="pdp-backdrop__review-stars">★★★★★</div>
+            <p class="pdp-backdrop__review-text">"Fast shipping and great customer service. The print quality is top-notch and colors are vibrant."</p>
+            <div class="pdp-backdrop__review-footer">
+              <span class="pdp-backdrop__review-author">Sarah L.</span>
+              <span class="pdp-backdrop__review-verified">Verified Buyer</span>
+            </div>
+          </div>
+          <div class="pdp-backdrop__review-card">
+            <div class="pdp-backdrop__review-stars">★★★★★</div>
+            <p class="pdp-backdrop__review-text">"Exactly what we needed for our trade show. It packs down small but makes a huge impact!"</p>
+            <div class="pdp-backdrop__review-footer">
+              <span class="pdp-backdrop__review-author">Michael K.</span>
+              <span class="pdp-backdrop__review-verified">Verified Buyer</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Product JSON -->
+  <script type="application/json" id="ProductJson-{{ section.id }}">
+  <!-- Product JSON -->
+  <script type="application/json" id="ProductJson-{{ section.id }}">
+    {
+      "variants": [
+        {% for variant in product.variants %}
+          {
+            "id": {{ variant.id | json }},
+            "options": {{ variant.options | json }},
+            "price": {{ variant.price | json }},
+            "compare_at_price": {{ variant.compare_at_price | json }},
+            "available": {{ variant.available | json }},
+            "featured_image": {{ variant.featured_image | json }}
+          }{% unless forloop.last %},{% endunless %}
+        {% endfor %}
+      ],
+      "media": {{ product.media | json }},
+      "currency": {{ cart.currency.iso_code | json }}
+    }
+  </script>
+  </script>
+
+  <!-- Product Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": {{ product.title | json }},
+    "image": [
+      {{ product.featured_image | image_url: width: 1600 | json }}
+    ],
+    "description": {{ product.description | strip_html | json }},
+    "sku": {{ product.selected_or_first_available_variant.sku | json }},
+    "brand": {
+      "@type": "Brand",
+      "name": {{ product.vendor | json }}
+    },
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": {{ cart.currency.iso_code | json }},
+      "price": {{ product.selected_or_first_available_variant.price | divided_by: 100.0 | json }},
+      "availability": "https://schema.org/{% if product.available %}InStock{% else %}OutOfStock{% endif %}",
+      "url": {{ shop.url | append: product.url | json }}
+    }
+  }
+  </script>
+
+  <!-- FAQ Schema -->
+  {% if faqs != blank %}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {% for faq in faqs %}
+      {
+        "@type": "Question",
+        "name": {{ faq.question | json }},
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": {{ faq.answer | strip_html | json }}
+        }
+      }{% unless forloop.last %},{% endunless %}
+      {% endfor %}
+    ]
+  }
+  </script>
+  {% endif %}
+
+  <!-- Swiper JS -->
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <script src="{{ 'pdp-backdrop.js' | asset_url }}" defer="defer"></script>
+
+</section>
+
+{% schema %}
+{
+  "name": "Main Product Backdrop",
+  "settings": [],
+  "presets": [
+    {
+      "name": "Main Product Backdrop"
+    }
+  ]
+}
+{% endschema %}
